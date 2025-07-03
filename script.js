@@ -4,39 +4,36 @@ fa.src = "https://kit.fontawesome.com/4b8b6e8e2a.js";
 fa.crossOrigin = "anonymous";
 document.head.appendChild(fa);
 
-// --- Visitor tracking with backend ---
+// --- Supabase Config ---
+const supabaseUrl = 'https://akiopcfdbgmbypxoszco.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFraW9wY2ZkYmdtYnlweG9zemNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MjI5MTgsImV4cCI6MjA2NzA5ODkxOH0.xLiGkvi8iNm2OLuxMhPVoGDdD-ec_Egl7KLYTo8jVUY';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// --- Insert Visitor ---
 fetch("https://ipapi.co/json/")
   .then(res => res.json())
   .then(data => {
-    // Send visitor info to backend
-    fetch("/save-visitor", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        ip: data.ip,
-        country: data.country_name,
-        datetime: new Date().toISOString()
-      })
-    })
-    .then(response => response.json())
-    .then(result => {
-      if (result.success) {
-        console.log("Visitor saved successfully");
-        loadVisitors(); // Reload visitor list
-      }
-    })
-    .catch(error => console.error("Error saving visitor:", error));
+    supabase
+      .from('visitors')
+      .insert([
+        { ip: data.ip, country: data.country_name, datetime: new Date().toISOString() }
+      ])
+      .then(response => {
+        loadVisitors(); // Refresh visitor list
+      });
   })
   .catch(error => console.error("Error getting IP info:", error));
 
 // --- Load and display visitor statistics ---
 function loadVisitors() {
-  fetch("/api/visitors")
-    .then(res => res.json())
-    .then(visitors => {
+  supabase
+    .from('visitors')
+    .select('*')
+    .order('datetime', { ascending: false })
+    .then(({ data, error }) => {
       const visitorList = document.getElementById("visitorList");
       
-      if (visitors.length === 0) {
+      if (error || !data || data.length === 0) {
         visitorList.innerHTML = "<div class=\"no-visitors\">No visitors recorded yet.</div>";
         return;
       }
@@ -45,7 +42,7 @@ function loadVisitors() {
       tableHTML += "<thead><tr><th>IP Address</th><th>Country</th><th>Date & Time</th></tr></thead>";
       tableHTML += "<tbody>";
       
-      visitors.forEach(visitor => {
+      data.forEach(visitor => {
         const date = new Date(visitor.datetime).toLocaleString();
         tableHTML += `<tr>
           <td>${visitor.ip}</td>
@@ -55,7 +52,8 @@ function loadVisitors() {
       });
       
       tableHTML += "</tbody></table>";
-      visitorList.innerHTML = tableHTML;
+      // Add total visitor count
+      visitorList.innerHTML = `<div style="margin-bottom:10px;font-weight:bold;">Total Visitors: ${data.length}</div>` + tableHTML;
     })
     .catch(error => {
       console.error("Error loading visitors:", error);
