@@ -1,3 +1,5 @@
+import { createClient } from '@supabase/supabase-js';
+
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -6,6 +8,10 @@ const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const supabaseUrl = 'https://akiopcfdbgmbypxoszco.supabase.co';
+const supabaseKey = process.env.SUPABASE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Middleware
 app.use(cors());
@@ -55,6 +61,26 @@ app.get("/api/visitors", (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Example: Insert a visitor (call this function where needed)
+async function insertVisitor(ip, country, country_code) {
+  const { data, error } = await supabase
+    .from('visitors')
+    .insert([{ ip, country, country_code, datetime: new Date().toISOString() }]);
+  if (error) console.error('Supabase insert error:', error);
+  else console.log('Visitor inserted:', data);
+}
+
+// Example: Fetch all visitors (call this function where needed)
+async function getVisitors() {
+  const { data, error } = await supabase
+    .from('visitors')
+    .select('*')
+    .order('datetime', { ascending: false });
+  if (error) console.error('Supabase fetch error:', error);
+  else console.log('Visitors:', data);
+  return data;
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

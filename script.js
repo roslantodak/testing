@@ -9,24 +9,28 @@ const supabaseUrl = 'https://akiopcfdbgmbypxoszco.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFraW9wY2ZkYmdtYnlweG9zemNvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTE1MjI5MTgsImV4cCI6MjA2NzA5ODkxOH0.xLiGkvi8iNm2OLuxMhPVoGDdD-ec_Egl7KLYTo8jVUY';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// --- Insert Visitor ---
-fetch("https://ipapi.co/json/")
+// --- Insert Visitor using ipinfo.io ---
+fetch('https://ipinfo.io/json?token=')
   .then(res => res.json())
   .then(data => {
     supabase
       .from('visitors')
       .insert([
-        { ip: data.ip, country: data.country_name, country_code: data.country_code, datetime: new Date().toISOString() }
+        {
+          ip: data.ip || '-',
+          country: data.country || '-',
+          country_code: data.country || '-',
+          datetime: new Date().toISOString()
+        }
       ])
       .then(response => {
         loadVisitors(); // Refresh visitor list
       });
-  })
-  .catch(error => console.error("Error getting IP info:", error));
+  });
 
 // --- Helper: Convert country code to flag emoji ---
 function countryCodeToFlagEmoji(code) {
-  if (!code) return '🏳️';
+  if (!code || code === '-') return '🏳️';
   return code
     .toUpperCase()
     .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
