@@ -10,7 +10,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // --- Insert Visitor using ipinfo.io ---
-fetch('https://ipinfo.io/json?token=')
+fetch('https://ipinfo.io/json')
   .then(res => res.json())
   .then(data => {
     supabase
@@ -18,7 +18,6 @@ fetch('https://ipinfo.io/json?token=')
       .insert([
         {
           ip: data.ip || '-',
-          country: data.country || '-',
           country_code: data.country || '-',
           datetime: new Date().toISOString()
         }
@@ -59,14 +58,14 @@ function loadVisitors() {
         const flag = countryCodeToFlagEmoji(visitor.country_code);
         tableHTML += `<tr>
           <td>${visitor.ip || '-'}</td>
-          <td style="font-size:1.5em;">${flag}</td>
+          <td style=\"font-size:1.5em;\">${flag}</td>
           <td>${date}</td>
         </tr>`;
       });
       
       tableHTML += "</tbody></table>";
       // Add total visitor count
-      visitorList.innerHTML = `<div style="margin-bottom:10px;font-weight:bold;">Total Visitors: ${data.length}</div>` + tableHTML;
+      visitorList.innerHTML = `<div style=\"margin-bottom:10px;font-weight:bold;\">Total Visitors: ${data.length}</div>` + tableHTML;
     })
     .catch(error => {
       console.error("Error loading visitors:", error);
