@@ -16,13 +16,21 @@ fetch("https://ipapi.co/json/")
     supabase
       .from('visitors')
       .insert([
-        { ip: data.ip, country: data.country_name, datetime: new Date().toISOString() }
+        { ip: data.ip, country: data.country_name, country_code: data.country_code, datetime: new Date().toISOString() }
       ])
       .then(response => {
         loadVisitors(); // Refresh visitor list
       });
   })
   .catch(error => console.error("Error getting IP info:", error));
+
+// --- Helper: Convert country code to flag emoji ---
+function countryCodeToFlagEmoji(code) {
+  if (!code) return '🏳️';
+  return code
+    .toUpperCase()
+    .replace(/./g, char => String.fromCodePoint(127397 + char.charCodeAt()));
+}
 
 // --- Load and display visitor statistics ---
 function loadVisitors() {
@@ -44,9 +52,10 @@ function loadVisitors() {
       
       data.forEach(visitor => {
         const date = new Date(visitor.datetime).toLocaleString();
+        const flag = countryCodeToFlagEmoji(visitor.country_code);
         tableHTML += `<tr>
-          <td>${visitor.ip}</td>
-          <td>${visitor.country}</td>
+          <td>${visitor.ip || '-'}</td>
+          <td style="font-size:1.5em;">${flag}</td>
           <td>${date}</td>
         </tr>`;
       });
